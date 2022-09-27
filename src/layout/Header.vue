@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import { AuthService } from '../services/auth.service'
+import { AuthService } from '@/services/auth.service'
 
 import UiHeaderDropdownMenu from '@/components/UiHeaderDropdownMenu.vue'
 import UiToastList from '@/components/UiToastList'
@@ -60,7 +60,7 @@ export default {
   }
 
   a {
-    color: #000;
+    color: $color-error;
     text-decoration: none;
   }
 
