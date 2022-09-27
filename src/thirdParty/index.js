@@ -1,6 +1,9 @@
-/**
- * import and init third party
- * components/validators and other dependencies
- */
+import Vue from 'vue'
+import * as VueGoogleMaps from 'vue2-google-maps'
 
-// import Vue from 'vue'
+Vue.use(VueGoogleMaps, {
+  load: {
+    key: 'AIzaSyDc7PnOq3Hxzq6dxeUVaY8WGLHIePl0swY',
+    libraries: 'places'
+  }
+})

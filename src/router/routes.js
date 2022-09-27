@@ -7,6 +7,7 @@ import homePage from '../pages/Home.vue'
 import newsPage from '../pages/news/NewsPage.vue'
 import loginPage from '../pages/Login.vue'
 import notFoundPage from '../pages/NotFound.vue'
+import GoogleMapTest from '../pages/google-map/GoogleMapTest.vue'
 
 import { routePropResolver } from './util'
 import { DOMAIN_TITLE } from '../.env'
@@ -47,5 +48,11 @@ export const routes = [
     path: '*',
     component: notFoundPage,
     meta: { title: `${DOMAIN_TITLE} | not found` }
+  },
+  {
+    path: '/google-map',
+    name: 'google-map',
+    component: GoogleMapTest,
+    meta: { title: `${DOMAIN_TITLE} | google-map` }
   }
 ]
