@@ -71,8 +71,8 @@ export default {
 
       try {
         const { data } = await PostsService.getListPublic(this.fetchParams)
-        this.news = data.content
-        this.pagination.total = data.total
+        this.news = data?.content
+        this.pagination.total = data?.total
       } catch (e) {
         this.$store.commit('toast/NEW', { type: 'error', message: e.message, e })
         this.error = e.message

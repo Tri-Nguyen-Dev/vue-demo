@@ -1,13 +1,16 @@
 <template>
   <div class="login">
     <div class="main">
-      <div class="header">Вход</div>
+      <div class="header">Login</div>
       <div class="content">
-        <label for="email">E-mail</label>
-        <input id="email" type="text" v-model="email">
-
-        <label for="password">password</label>
-        <input id="password" type="password" v-model="password" @keyup.enter="makeLogin">
+        <div>
+          <label for="email">E-mail</label>
+          <input id="email" type="text" v-model="email">
+        </div>
+        <div>
+          <label for="password">password</label>
+          <input id="password" type="password" v-model="password" @keyup.enter="makeLogin">
+        </div>
       </div>
       <div class="buttons">
         <button @click="makeLogin">login</button>
@@ -27,7 +30,7 @@ export default {
   name: 'Login',
   data () {
     return {
-      email: 'user@user.com',
+      email: 'minhtri1314@gmail.com',
       password: '123456',
       error: ''
     }
