@@ -1,6 +1,7 @@
 <template>
   <div class="news page">
     <div>
+      <h3>test pull request</h3>
       <h1>{{ newsText }}</h1>
       <br><br>
     </div>
