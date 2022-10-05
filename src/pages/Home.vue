@@ -1,6 +1,15 @@
 <template>
   <div class="home page">
-    <h1>{{ msg }}</h1>
+    <h1>hello</h1>
+    <h2>hello 2</h2>
+    <div>
+      <span>
+        <UiBaseIcon width="20px" height="20px" color="blue" iconName="done" @click="onClickIcon"/>
+        <span v-if="renderIcon('hello')">Hello </span>
+      </span>
+      <span v-html="renderElement()"></span>
+    </div>
+    <br />
     <button @click="isShownModal = true">show modal</button>
     <button @click="showToast">show toast</button>
     <UiModal closeOnOverlay :show.sync="isShownModal">
@@ -11,8 +20,6 @@
         </div>
       </div>
     </UiModal>
-
-    <UiBaseIcon width="40px" height="40px" color="blue" iconName="done" @click="onClickIcon"/>
 
     <UiInputText
       v-model="msg"
@@ -74,6 +81,12 @@ export default {
   },
 
   methods: {
+    renderIcon (text) {
+      return ['hello', 'hi'].includes(text)
+    },
+    renderElement () {
+      return 'cô don'
+    },
     showToast () {
       console.log('aaa')
       this.$store.commit('toast/NEW', { type: 'success', message: 'hello' })
