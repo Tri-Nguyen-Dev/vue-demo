@@ -1,86 +1,117 @@
 <template>
-  <div class="data-box component">
-    <SpinnerWave class="spinner-wrapper" v-if="loading"></SpinnerWave>
-
-    <div :class="{'data-box-content': true, 'loading': loading}" v-if="!isEmpty && !error">
-      <slot></slot>
+  <div>
+    <div class="sidebar">
+      <ul>
+        <li
+            v-for="(heading, index) in headings"
+            :key="index"
+            :class="{ active: activeIndex === index }"
+        >
+          <a :href="'#' + heading.id">{{ heading.text }}</a>
+        </li>
+      </ul>
     </div>
 
-    <div class="data-box-content is-empty" v-if="isEmpty && !error && !loading">
-      <div class="smile">(O_o)</div>
-      <div class="title">No content!</div>
-    </div>
-
-    <div class="data-box-content error" v-if="error">
-      <div class="smile">(O_o)</div>
-      <div class="title">Something wrong here!</div>
-      <div class="error-msg">{{ error }}</div>
+    <div class="content">
+      <div v-html="testFile"></div>
     </div>
   </div>
 </template>
 
 <script>
-import SpinnerWave from './progress-loaders/UiSpinnerWave.vue'
+import {ref, onMounted, onUnmounted, nextTick} from 'vue';
+import testFile from '@/test.md';
 
 export default {
-  name: 'DataBox',
-  props: {
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    isEmpty: {
-      type: Boolean,
-      default: false
-    },
-    error: {
-      type: [String, Boolean],
-      default: false
+  setup() {
+    const headings = ref([]);
+    const activeIndex = ref(0);
+
+    // Hàm này sẽ chạy khi cuộn trang
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      console.log(scrollPosition)
+
+      console.log(window.pageYOffset)
+
+      let foundIndex = -1;
+      headings.value.forEach((heading, index) => {
+        const element = document.getElementById(heading.id);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const top = rect.top + window.pageYOffset - 50; // Trừ đi một khoảng để tính cho header nếu có
+          if (scrollPosition >= top) {
+            foundIndex = index;
+          }
+        }
+      });
+
+      activeIndex.value = foundIndex;
+    };
+
+    function convertToSlug(Text) {
+      return Text.toLowerCase()
+          .replace(/ /g, "-")
+          .replace(/[^\w-]+/g, "");
     }
+
+    // Lấy danh sách các tiêu đề h1, h2, h3 từ trang
+    const getHeadings = () => {
+      const headingsList = [];
+      const elements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      elements.forEach((element) => {
+
+        element.id = convertToSlug(element.textContent)
+        headingsList.push({
+          id: convertToSlug(element.textContent),
+          text: element.textContent,
+        });
+      });
+      headings.value = headingsList;
+    };
+
+    onMounted(() => {
+      nextTick(() => {
+        getHeadings();
+        window.addEventListener('scroll', handleScroll);
+      })
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleScroll);
+    });
+
+    return {
+      headings,
+      activeIndex,
+      testFile
+    };
   },
-  components: { SpinnerWave }
-}
+};
 </script>
 
-<style scoped lang="scss">
-.data-box.component {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  .data-box-content {
-    height: 100%;
-  }
-  .data-box-content.loading {
-    min-height: 200px;
-    opacity: .3;
-    pointer-events: none;
-  }
-  .spinner-wrapper {
-    position: absolute;
-  }
+<style>
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 200px;
+}
 
-  .is-empty, .error{
-    text-align: center;
-    padding: 30px;
-    font-size: 16px;
-    .title {
-      font-size: 20px;
-    }
-    .smile {
-      font-size: 120px;
-      padding-bottom: 20px;
-    }
-  }
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
 
-  .error {
-    color: red;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.sidebar li {
+  padding: 10px;
+}
 
-    .error-msg {
-      padding-top: 10px;
-    }
-  }
+.sidebar li.active {
+  background-color: #d3d3d3;
+}
+
+.content {
+  margin-left: 220px;
 }
 </style>
