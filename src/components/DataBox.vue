@@ -115,3 +115,49 @@ export default {
   margin-left: 220px;
 }
 </style>
+
+
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
+import path from 'path';
+
+import MarkdownIt from 'markdown-it';
+
+const markdown = new MarkdownIt();
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    vueJsx(),
+    {
+      name: 'vite-plugin-markdown',
+      transform(src, id) {
+        if (id.endsWith('.md')) {
+          // Xử lý Markdown với Markdown-it
+          const html = markdown.render(src);
+
+          // Chuyển đổi hình ảnh trong Markdown thành đường dẫn tương đối
+          const processedHtml = html.replace(/!\[.*?\]\((.*?)\)/g, (_, url) => {
+            // Chuyển đổi hình ảnh từ `src/assets` thành đường dẫn từ thư mục gốc
+            if (url.startsWith('./src/assets/')) {
+              return `![Image](/${path.relative('public', url)})`;
+            }
+            return `![Image](${url})`;
+          });
+
+          return `export default ${JSON.stringify(processedHtml)}`;
+        }
+      },
+    }
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
+})
+
