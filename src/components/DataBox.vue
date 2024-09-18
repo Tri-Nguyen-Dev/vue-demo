@@ -1,4 +1,76 @@
 <template>
+  <div class="container">
+    <!-- Sidebar -->
+    <transition name="sidebar">
+      <div :class="{ collapsed: isCollapsed }" class="sidebar">
+        <ChatBegin :isCollapsed="isCollapsed" />
+        <p>Sidebar content here</p>
+        <ul>
+          <li v-for="item in menuItems" :key="item">{{ item }}</li>
+        </ul>
+      </div>
+    </transition>
+
+    <!-- Main content -->
+    <!-- Main content -->
+    <div class="main-content">
+      <button @click="toggleCollapse">
+        {{ isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar' }}
+      </button>
+      <p>Main content here...</p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import {ref} from 'vue';
+import ChatBegin from "@/components/ChatBegin.vue";
+
+const isCollapsed = ref(false);
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value;
+};
+
+const menuItems = ['Home', 'About', 'Contact', 'Services'];
+</script>
+
+<style scoped>
+/* Container to hold both sidebar and content */
+.container {
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  transition: width 0.3s ease;
+}
+
+/* When the sidebar is collapsed */
+.collapsed {
+  width: 80px; /* Width khi thu nhỏ */
+}
+
+/* Main content */
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+}
+
+/* Transition for sidebar width */
+.sidebar-enter-active, .sidebar-leave-active {
+  transition: width 0.3s ease;
+}
+</style>
+
+
+
+
+
+<template>
   <div>
     <div class="sidebar">
       <ul>
