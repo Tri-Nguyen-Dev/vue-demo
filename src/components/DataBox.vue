@@ -1,235 +1,129 @@
 <template>
-  <div class="container">
-    <!-- Sidebar -->
-    <transition name="sidebar">
-      <div :class="{ collapsed: isCollapsed }" class="sidebar">
-        <ChatBegin :isCollapsed="isCollapsed" />
-        <p>Sidebar content here</p>
-        <ul>
-          <li v-for="item in menuItems" :key="item">{{ item }}</li>
-        </ul>
+  <div class="chat-box">
+    <div
+        class="messages"
+        ref="messageContainer"
+        @scroll="onScroll"
+    >
+      <!-- Các tin nhắn trong chat -->
+      <div v-for="(message, index) in typedMessages" :key="index" class="message">
+        {{ message }}
       </div>
-    </transition>
-
-    <!-- Main content -->
-    <!-- Main content -->
-    <div class="main-content">
-      <button @click="toggleCollapse">
-        {{ isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar' }}
-      </button>
-      <p>Main content here...</p>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import {ref} from 'vue';
-import ChatBegin from "@/components/ChatBegin.vue";
-
-const isCollapsed = ref(false);
-
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value;
-};
-
-const menuItems = ['Home', 'About', 'Contact', 'Services'];
-</script>
-
-<style scoped>
-/* Container to hold both sidebar and content */
-.container {
-  display: flex;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  background-color: #f8f9fa;
-  padding: 10px;
-  transition: width 0.3s ease;
-}
-
-/* When the sidebar is collapsed */
-.collapsed {
-  width: 80px; /* Width khi thu nhỏ */
-}
-
-/* Main content */
-.main-content {
-  flex-grow: 1;
-  padding: 20px;
-}
-
-/* Transition for sidebar width */
-.sidebar-enter-active, .sidebar-leave-active {
-  transition: width 0.3s ease;
-}
-</style>
-
-
-
-
-
-<template>
-  <div>
-    <div class="sidebar">
-      <ul>
-        <li
-            v-for="(heading, index) in headings"
-            :key="index"
-            :class="{ active: activeIndex === index }"
-        >
-          <a :href="'#' + heading.id">{{ heading.text }}</a>
-        </li>
-      </ul>
     </div>
 
-    <div class="content">
-      <div v-html="testFile"></div>
-    </div>
+    <!-- Input để nhập tin nhắn -->
+    <input
+        v-model="newMessage"
+        @keyup.enter="sendMessage"
+        placeholder="Nhập tin nhắn..."
+    />
   </div>
 </template>
 
 <script>
-import {ref, onMounted, onUnmounted, nextTick} from 'vue';
-import testFile from '@/test.md';
+import { ref, nextTick } from 'vue';
 
 export default {
   setup() {
-    const headings = ref([]);
-    const activeIndex = ref(0);
+    const messages = ref([]); // Lưu trữ tất cả các tin nhắn
+    const typedMessages = ref([]); // Lưu trữ các tin nhắn đã được gõ
+    const newMessage = ref('');
+    const messageQueue = ref([]); // Hàng đợi để lưu trữ tin nhắn đến
+    const isTyping = ref(false); // Theo dõi trạng thái gõ
+    const messageContainer = ref(null); // Tham chiếu tới container tin nhắn
+    const autoScrollEnabled = ref(true); // Kiểm tra xem có auto-scroll hay không
 
-    // Hàm này sẽ chạy khi cuộn trang
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      console.log(scrollPosition)
+    const processQueue = async () => {
+      if (isTyping.value || messageQueue.value.length === 0) return;
 
-      console.log(window.pageYOffset)
+      isTyping.value = true;
+      const message = messageQueue.value.shift(); // Lấy tin nhắn đầu tiên từ hàng đợi
+      typedMessages.value.push(''); // Thêm một dòng trống vào danh sách hiển thị
 
-      let foundIndex = -1;
-      headings.value.forEach((heading, index) => {
-        const element = document.getElementById(heading.id);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const top = rect.top + window.pageYOffset - 50; // Trừ đi một khoảng để tính cho header nếu có
-          if (scrollPosition >= top) {
-            foundIndex = index;
+      await typeMessage(message);
+
+      isTyping.value = false;
+
+      // Tiếp tục xử lý hàng đợi sau khi hoàn tất tin nhắn
+      if (messageQueue.value.length > 0) {
+        processQueue();
+      }
+    };
+
+    const typeMessage = (fullMessage) => {
+      return new Promise((resolve) => {
+        let currentMessage = '';
+        let currentIndex = 0;
+
+        const typingInterval = setInterval(() => {
+          if (currentIndex < fullMessage.length) {
+            currentMessage += fullMessage[currentIndex];
+            typedMessages.value[typedMessages.value.length - 1] = currentMessage;
+            currentIndex++;
+
+            // Tự động cuộn xuống dưới mỗi khi thêm ký tự mới
+            if (autoScrollEnabled.value) {
+              nextTick(() => scrollToBottom());
+            }
+          } else {
+            clearInterval(typingInterval);
+            resolve(); // Kết thúc quá trình gõ
           }
-        }
+        }, 10); // Tốc độ gõ (100ms cho mỗi ký tự)
       });
-
-      activeIndex.value = foundIndex;
     };
 
-    function convertToSlug(Text) {
-      return Text.toLowerCase()
-          .replace(/ /g, "-")
-          .replace(/[^\w-]+/g, "");
-    }
-
-    // Lấy danh sách các tiêu đề h1, h2, h3 từ trang
-    const getHeadings = () => {
-      const headingsList = [];
-      const elements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-      elements.forEach((element) => {
-
-        element.id = convertToSlug(element.textContent)
-        headingsList.push({
-          id: convertToSlug(element.textContent),
-          text: element.textContent,
-        });
-      });
-      headings.value = headingsList;
+    const sendMessage = () => {
+      if (newMessage.value.trim() !== '') {
+        messageQueue.value.push(newMessage.value); // Đẩy tin nhắn vào hàng đợi
+        newMessage.value = ''; // Xoá input
+        processQueue(); // Bắt đầu xử lý hàng đợi
+      }
     };
 
-    onMounted(() => {
-      nextTick(() => {
-        getHeadings();
-        window.addEventListener('scroll', handleScroll);
-      })
-    });
+    const scrollToBottom = () => {
+      const container = messageContainer.value;
+      container.scrollTop = container.scrollHeight; // Cuộn tới cuối cùng
+    };
 
-    onUnmounted(() => {
-      window.removeEventListener('scroll', handleScroll);
-    });
+    const onScroll = () => {
+      const container = messageContainer.value;
+      // Kiểm tra xem người dùng có đang cuộn ở cuối hay không
+      const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
+
+      // Bật hoặc tắt tự động cuộn xuống dưới
+      autoScrollEnabled.value = isAtBottom;
+    };
 
     return {
-      headings,
-      activeIndex,
-      testFile
+      newMessage,
+      typedMessages,
+      sendMessage,
+      messageContainer,
+      onScroll,
     };
   },
 };
 </script>
 
-<style>
-.sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 200px;
+<style scoped>
+.chat-box {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li {
+.messages {
+  border: 1px solid #ccc;
   padding: 10px;
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
 }
 
-.sidebar li.active {
-  background-color: #d3d3d3;
-}
-
-.content {
-  margin-left: 220px;
+.message {
+  margin: 5px 0;
+  font-family: monospace;
+  padding: 12px;
+  background-color: #f4f4f4;
 }
 </style>
-
-
-import { fileURLToPath, URL } from 'node:url'
-
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
-import path from 'path';
-
-import MarkdownIt from 'markdown-it';
-
-const markdown = new MarkdownIt();
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    vueJsx(),
-    {
-      name: 'vite-plugin-markdown',
-      transform(src, id) {
-        if (id.endsWith('.md')) {
-          // Xử lý Markdown với Markdown-it
-          const html = markdown.render(src);
-
-          // Chuyển đổi hình ảnh trong Markdown thành đường dẫn tương đối
-          const processedHtml = html.replace(/!\[.*?\]\((.*?)\)/g, (_, url) => {
-            // Chuyển đổi hình ảnh từ `src/assets` thành đường dẫn từ thư mục gốc
-            if (url.startsWith('./src/assets/')) {
-              return `![Image](/${path.relative('public', url)})`;
-            }
-            return `![Image](${url})`;
-          });
-
-          return `export default ${JSON.stringify(processedHtml)}`;
-        }
-      },
-    }
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  }
-})
-
