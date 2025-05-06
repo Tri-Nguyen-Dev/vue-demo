@@ -1,3 +1,16 @@
 > 1%
 last 2 versions
 not ie <= 8
+
+function startPing(sessionId: string) {
+  if (pingIntervals.has(sessionId)) return
+  const timer = window.setInterval(() => {
+
+    const sock = sockets.get(sessionId)
+
+    if (sock?.readyState === WebSocket.OPEN) {
+      ssm.sendACK(sock, {payloadType: 9, payload: new Uint8Array()})
+    }
+  }, 20000)
+  pingIntervals.set(sessionId, timer)
+}
